@@ -7,7 +7,8 @@ class V1::Weather::HelperMethods::WeatherHelper
     #   return error
     # end
     error = { error: 'Invalid location or external weather API down' }
-    weather_data = LocTemp.filter_by_location(loc_ids).select('loc_id, temperature')
+    # TODO: extend the scope with dates as a selection criteria
+    weather_data = LocTemp.filter_by_location(loc_ids)
     init_loc_count = Hash[loc_ids.zip([0])]
     loc_count_hash = weather_data.each_with_object(Hash.new(0)) { |h1, h2| h2[h1[:loc_id]] += 1 }
     loc_count_hash = init_loc_count.merge(loc_count_hash)
@@ -18,7 +19,7 @@ class V1::Weather::HelperMethods::WeatherHelper
     else
       # its convenient to retrieve fresh data from model as we can have maximum
       # 5 records (1 location 5 temp or 5 location 1 temp each)
-      # otherwise needa mechanism to merge the newly retrieved data
+      # otherwise need a mechanism to merge the newly retrieved data
       call_external_api(stale) ? LocTemp.filter_by_location(loc_ids) : error
     end
   end
@@ -28,7 +29,7 @@ class V1::Weather::HelperMethods::WeatherHelper
   # Retruns boolean
   def add_to_model(data)
     loc_temp = LocTemp.create(loc_id: data['loc_id'], temperature: data['temp'],
-                   date: data['date'], time: data['time'])
+                              date: data['date'], time: data['time'])
     loc_temp.save
   end
 
