@@ -1,0 +1,2 @@
+class ExtApiCount < ApplicationRecord
+end

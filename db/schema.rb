@@ -10,7 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_03_15_004555) do
+ActiveRecord::Schema.define(version: 2020_03_15_172637) do
+
+  create_table "ext_api_counts", force: :cascade do |t|
+    t.integer "count"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
 
   create_table "loc_temps", force: :cascade do |t|
     t.integer "loc_id"

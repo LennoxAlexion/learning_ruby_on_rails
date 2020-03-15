@@ -1,6 +1,7 @@
 class V1::Weather::LocationsController < ApplicationController
   require_relative './helper_methods/weather_helper'
   def index
+    # TODO: remove index
     location = LocTemp.all
 
     render json: location, status: :ok
