@@ -20,11 +20,21 @@ class V1::Weather::HelperMethods::WeatherHelper
       # its convenient to retrieve fresh data from model as we can have maximum
       # 5 records (1 location 5 temp or 5 location 1 temp each)
       # otherwise need a mechanism to merge the newly retrieved data
-      call_external_api(stale) ? LocTemp.filter_by_location(loc_ids) : error
+      call_external_api(stale) ? LocTemp.filter_by_location(loc_ids)[0, days] : error
     end
   end
 
   private
+
+  def update_ext_api_counter
+    counter = ExtApiCount.find_by(id: 1)
+    if counter
+      counter.update(count: counter.count + 1)
+    else
+      counter = ExtApiCount.create(count: 1)
+    end
+    counter.save
+  end
 
   # Retruns boolean
   def add_to_model(data)
@@ -40,6 +50,7 @@ class V1::Weather::HelperMethods::WeatherHelper
     ow = V1::Weather::HelperMethods::OpenWeatherApiHelper.new
     loc_ids.each do |loc|
       response = ow.weather(loc)
+      update_ext_api_counter
       # TODO: Check if results are accurate by taking a mod by 8
       # any time of the day get weather once for every day
       # API 
