@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  loc_id: 1
+  date: 2020-03-14
+  time: 2020-03-14 16:04:58
+  temperature: 9.99
+
+two:
+  loc_id: 1
+  date: 2020-03-14
+  time: 2020-03-14 16:04:58
+  temperature: 9.99
