@@ -2,12 +2,12 @@ class V1::Weather::HelperMethods::WeatherHelper
   require_relative './open_weather_api_helper'
 
   # loc_id-> [integers]; days-> int, just_next_day-> bool, unit -> string
-  def get_weather(loc_ids, days, just_next_day, unit = @@celsius)
+  def get_weather(loc_ids, days, just_next_day, unit = CELSIUS)
     error = { error: 'Invalid location or external weather API down' }
     weather_data = LocTemp.filter_by_location(loc_ids, Date.today)
     result = build_response(weather_data, days, just_next_day, unit)
-    #initialize location count
-    loc_count_hash = Hash[loc_ids.zip([0])]
+    # initialize location count
+    loc_count_hash = Hash[loc_ids.product([0])]
     loc_count_hash = loc_count_hash.merge(result[1])
     # Get all the locations id with count < days
     stale = (loc_count_hash.select { |_, value| value < days }).keys
@@ -27,7 +27,9 @@ class V1::Weather::HelperMethods::WeatherHelper
 
   private
 
-  @@celsius = 'celsius'
+  CELSIUS = 'celsius'.freeze
+  FAHRENHEIT = 'fahrenheit'.freeze
+  private_constant :CELSIUS, :FAHRENHEIT
 
   def build_response(weather_data, days, just_next_day, unit)
     response = {}
@@ -37,9 +39,10 @@ class V1::Weather::HelperMethods::WeatherHelper
          (just_next_day && item['date'] == Date.today)
         next
       end
+
       temp = item['temperature'].to_f
       temp_unit = 'C'
-      if unit.casecmp?('fahrenheit')
+      if unit.casecmp?(FAHRENHEIT)
         temp = (temp * 9 / 5) + 32
         temp_unit = 'F'
       end
@@ -81,7 +84,7 @@ class V1::Weather::HelperMethods::WeatherHelper
       update_ext_api_counter
       # TODO: Check if results are accurate by taking a mod by 8
       # any time of the day get weather once for every day
-      # API 
+      # Also check if we have a response
       response.parsed_response['list'].each_with_index do |item, index|
         next unless (index % 8).zero?
 
