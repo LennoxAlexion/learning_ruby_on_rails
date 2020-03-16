@@ -84,7 +84,7 @@ class V1::Weather::HelperMethods::WeatherHelper
       update_ext_api_counter
       # TODO: Check if results are accurate by taking a mod by 8
       # any time of the day get weather once for every day
-      # Also check if we have a response
+      # Also check if we have a proper response
       response.parsed_response['list'].each_with_index do |item, index|
         next unless (index % 8).zero?
 
