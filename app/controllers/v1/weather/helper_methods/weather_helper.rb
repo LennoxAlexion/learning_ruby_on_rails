@@ -1,33 +1,61 @@
 class V1::Weather::HelperMethods::WeatherHelper
   require_relative './open_weather_api_helper'
 
-  def get_weather(loc_ids, days)
-    # Validation:
-    # if days > 5 or days < 5
-    #   return error
-    # end
+  # loc_id-> [integers]; days-> int, just_next_day-> bool, unit -> string
+  def get_weather(loc_ids, days, just_next_day, unit = @@celsius)
     error = { error: 'Invalid location or external weather API down' }
-    # TODO: extend the scope with dates as a selection criteria
-    weather_data = LocTemp.filter_by_location(loc_ids)
-    init_loc_count = Hash[loc_ids.zip([0])]
-    loc_count_hash = weather_data.each_with_object(Hash.new(0)) { |h1, h2| h2[h1[:loc_id]] += 1 }
-    loc_count_hash = init_loc_count.merge(loc_count_hash)
+    weather_data = LocTemp.filter_by_location(loc_ids, Date.today)
+    result = build_response(weather_data, days, just_next_day, unit)
+    #initialize location count
+    loc_count_hash = Hash[loc_ids.zip([0])]
+    loc_count_hash = loc_count_hash.merge(result[1])
     # Get all the locations id with count < days
     stale = (loc_count_hash.select { |_, value| value < days }).keys
-    if stale.empty?
-      weather_data[0, days]
-    else
+    unless stale.empty?
       # its convenient to retrieve fresh data from model as we can have maximum
       # 5 records (1 location 5 temp or 5 location 1 temp each)
       # otherwise need a mechanism to merge the newly retrieved data
-      call_external_api(stale) ? LocTemp.filter_by_location(loc_ids)[0, days] : error
+      if call_external_api(stale)
+        weather_data = LocTemp.filter_by_location(loc_ids, Date.today)
+        result = build_response(weather_data, days, just_next_day, unit)
+      else
+        error
+      end
     end
+    result[0]
   end
 
   private
 
+  @@celsius = 'celsius'
+
+  def build_response(weather_data, days, just_next_day, unit)
+    response = {}
+    loc_count_hash = {}
+    weather_data.each { |item|
+      if loc_count_hash.fetch(item['loc_id'], 0) >= days ||
+         (just_next_day && item['date'] == Date.today)
+        next
+      end
+      temp = item['temperature'].to_f
+      temp_unit = 'C'
+      if unit.casecmp?('fahrenheit')
+        temp = (temp * 9 / 5) + 32
+        temp_unit = 'F'
+      end
+      response[item['loc_id']] = response
+                                 .fetch(item['loc_id'], [])
+                                 .push({ 'temperature' => temp,
+                                         'unit' => temp_unit,
+                                         'date' => item['date'] })
+      loc_count_hash[item['loc_id']] = loc_count_hash
+                                       .fetch(item['loc_id'], 0) + 1
+    }
+    [response, loc_count_hash]
+  end
+
   def update_ext_api_counter
-    counter = ExtApiCount.find_by(id: 1)
+    counter = ExtApiCount.find_by(id: ExtApiCount.maximum(:id))
     if counter
       counter.update(count: counter.count + 1)
     else

@@ -10,7 +10,7 @@ class V1::Weather::LocationsController < ApplicationController
   def show
     wh = V1::Weather::HelperMethods::WeatherHelper.new
     if validate_param
-      render json: { message: wh.get_weather([params[:id].to_i], 1) }, status: :ok
+      render json: { message: wh.get_weather([params[:id].to_i], 5, false) }, status: :ok
     else
       render json: { message: 'Invalid location ' + params[:id] }, status: :ok
     end
