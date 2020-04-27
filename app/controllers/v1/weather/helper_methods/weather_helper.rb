@@ -32,11 +32,14 @@ class V1::Weather::HelperMethods::WeatherHelper
   private_constant :CELSIUS, :FAHRENHEIT
 
   def build_response(weather_data, days, just_next_day, unit)
+    # TODO: add a check on date if we are picking correct date entries
     response = {}
     loc_count_hash = {}
+    prev_day_temp = {}
     weather_data.each { |item|
       if loc_count_hash.fetch(item['loc_id'], 0) >= days ||
-         (just_next_day && item['date'] == Date.today)
+         (just_next_day && item['date'] == Date.today) ||
+         (prev_day_temp.fetch(item['loc_id'], 0) == item['date'])
         next
       end
 
@@ -53,6 +56,7 @@ class V1::Weather::HelperMethods::WeatherHelper
                                          'date' => item['date'] })
       loc_count_hash[item['loc_id']] = loc_count_hash
                                        .fetch(item['loc_id'], 0) + 1
+      prev_day_temp[item['loc_id']] = item['date']
     }
     [response, loc_count_hash]
   end
@@ -82,7 +86,7 @@ class V1::Weather::HelperMethods::WeatherHelper
     loc_ids.each do |loc|
       response = ow.weather(loc)
       update_ext_api_counter
-      # TODO: Check if results are accurate by taking a mod by 8
+      # TODO: Check if results are accurate by taking a mod by 8 or use date instead
       # any time of the day get weather once for every day
       # Also check if we have a proper response
       response.parsed_response['list'].each_with_index do |item, index|
